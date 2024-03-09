@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <div class="flex flex-col items-center">
+      <div
+        id="circle-container"
+        class="w-[400px] h-[400px] border border-slate-400 bg-slate-50 rounded relative mx-auto mt-24 overflow-hidden"
+      >
+        <div
+          id="circle"
+          class="size-10 bg-fuchsia-500 border border-fuchsia-6 00 rounded-full absolute"
+          style="transform: translate(-50%, -50%); left: 50%; top: 50%"
+        ></div>
+      </div>
+      <p id="info" class="text-slate-900 mt-2 font-bold">Debounced move</p>
+
+      <button
+        id="btn-change-move"
+        class="mt-8 relative mx-auto overflow-hidden rounded-md bg-fuchsia-600 px-4 py-2 text-white duration-300 [transition-timing-function:cubic-bezier(0.175,0.885,0.32,1.275)] active:translate-y-1 active:scale-x-110 active:scale-y-90"
+      >
+        Change to <span>throttle move</span>
+      </button>
+    </div>
+
+    <script>
+      let moveStyle = 'debounced';
+
+      const circleEl = document.getElementById('circle');
+      const containerEl = document.getElementById('circle-container');
+      const btnChangeMoveEl = document.getElementById('btn-change-move');
+      const infoEl = document.getElementById('info');
+
+      const debouncedChangeCirclePos = debounce(changeCirclePos);
+      const throttledChangeCirclePos = throttle(changeCirclePos);
+
+      const { left: containerLeft, top: containerTop } = containerEl.getBoundingClientRect();
+
+      btnChangeMoveEl.addEventListener('click', () => {
+        const textEl = btnChangeMoveEl.querySelector('span');
+
+        if (moveStyle === 'debounced') {
+          moveStyle = 'throttled';
+          infoEl.textContent = 'Throttled move';
+
+          textEl.textContent = 'debounce move';
+        } else if (moveStyle === 'throttled') {
+          moveStyle = 'debounced';
+          infoEl.textContent = 'Debounced move';
+
+          textEl.textContent = 'throttle move';
+        }
+      });
+
+      containerEl.addEventListener('mousemove', (e) => {
+        const mouseX = e.clientX - containerLeft;
+        const mouseY = e.clientY - containerTop;
+
+        switch (moveStyle) {
+          case 'debounced':
+            debouncedChangeCirclePos(mouseX, mouseY);
+            break;
+          case 'throttled':
+            throttledChangeCirclePos(mouseX, mouseY);
+            break;
+        }
+      });
+
+      function changeCirclePos(mouseX, mouseY) {
+        circleEl.style.left = `${mouseX}px`;
+        circleEl.style.top = `${mouseY}px`;
+      }
+
+      function debounce(fn = () => {}, ms = 200) {
+        let timeoutId = null;
+
+        function wrappedFn(...args) {
+          clearTimeout(timeoutId);
+          timeoutId = setTimeout(() => {
+            fn.apply(this, args);
+          }, ms);
+        }
+
+        return wrappedFn;
+      }
+
+      function throttle(fn = () => {}, ms = 500) {
+        let isThrottled = false;
+        let lastCallThis = null;
+        let lastCallArgs = null;
+
+        function wrappedFn(...args) {
+          if (isThrottled) {
+            lastCallArgs = args;
+            lastCallThis = this;
+            return;
+          }
+
+          fn.apply(this, args);
+          isThrottled = true;
+
+          setTimeout(() => {
+            isThrottled = false;
+            if (lastCallArgs) {
+              fn.apply(lastCallThis, lastCallArgs);
+            }
+            lastCallArgs = null;
+            lastCallThis = null;
+          }, ms);
+        }
+        return wrappedFn;
+      }
+    </script>
+  </body>
+</html>
